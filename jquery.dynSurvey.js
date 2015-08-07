@@ -99,8 +99,8 @@ onSave: (optional) overloads the generic saveProcess
 				
 				$("#wizard").append("<div id='"+sectionId+"' class='section"+sectionIndex+" "+sectionClass+"'></div>");
 				
-				var name = (sectionObj.name) ? sectionObj.name : "";
-				var desc = (sectionObj.desc) ? sectionObj.desc : "";
+				var name = (sectionObj.dynForm.jsonSchema.title) ? sectionObj.dynForm.jsonSchema.title : "";
+				var desc = (sectionObj.dynForm.jsonSchema.desc) ? sectionObj.dynForm.jsonSchema.desc : "";
 				var wizardLinkHTML = '<li><a href="#'+sectionId+'"><div class="stepNumber">'+(sectionIndex+1)+'</div>'+
 										'<span class="stepDesc"> '+name+
 											'<br /><small>'+desc+'</small> </span>'+
