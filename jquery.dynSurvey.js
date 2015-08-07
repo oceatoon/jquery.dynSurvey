@@ -24,6 +24,7 @@ onSave: (optional) overloads the generic saveProcess
 	survey,
 	initValues = {},
 	activeSection = 0,
+	wizardContent,numberOfSteps,
 	supportTransition = thisStyle.transition !== undefined || thisStyle.WebkitTransition !== undefined || thisStyle.MozTransition !== undefined || thisStyle.MsTransition !== undefined || thisStyle.OTransition !== undefined
 	
 	/*$(subviewBackClass).on("click", function(e) {
@@ -60,35 +61,66 @@ onSave: (optional) overloads the generic saveProcess
 			var form = {
 				rules : {}
 			};
-			var fieldHTML = '';
+			
 
+
+			/* **************************************
+			* Smart Wizard HTMl init
+			***************************************** */			
+			var wizardHTML = '<div id="wizard" class="swMain">'+
+			/* **************************************
+			* Wizard Likns
+			***************************************** */
+				'<ul id="wizardLinks"></ul>'+
+			/* **************************************
+			* Progress BAr
+			***************************************** */
+				'<div class="progress progress-xs transparent-black no-radius active">'+
+					'<div aria-valuemax="100" aria-valuemin="0" role="progressbar" class="progress-bar partition-green step-bar">'+
+						'<span class="sr-only"> 0% Complete (success)</span>'+
+					'</div>'+
+				'</div>'+
 			/* **************************************
 			* Error Section
 			***************************************** */
-			var errorHTML = '<div class="errorHandler alert alert-danger no-display">'+
-								'<i class="fa fa-remove-sign"></i> You have some form errors. Please check below.'+
-							'</div>';
-			$(settings.surveyId).append(errorHTML);
+				'<div class="errorHandler alert alert-danger no-display">'+
+					'<i class="fa fa-remove-sign"></i> You have some form errors. Please check below.'+
+				'</div>'
+			'</div>';
+			$(settings.surveyId).append(wizardHTML);
 
+			var fieldHTML = '';
 			var sectionIndex = 0;
 			var lastSection = "";
-			$.each(settings.surveyObj,function( sectionId ,formObj ) { 
-
+			$.each(settings.surveyObj,function( sectionId ,sectionObj ) 
+			{ 
 				console.info("building section : ",sectionIndex ,sectionId);
 				var sectionClass = (sectionIndex>0) ? "hide" : ""
-				$(settings.surveyId).append("<div id='"+sectionId+"' class='section"+sectionIndex+" "+sectionClass+"'></div>");
-				$.each(formObj.jsonSchema.properties,function(field,fieldObj) { 
+				
+				$("#wizard").append("<div id='"+sectionId+"' class='section"+sectionIndex+" "+sectionClass+"'></div>");
+				
+				var name = (sectionObj.name) ? sectionObj.name : "";
+				var desc = (sectionObj.desc) ? sectionObj.desc : "";
+				var wizardLinkHTML = '<li><a href="#'+sectionId+'"><div class="stepNumber">'+(sectionIndex+1)+'</div>'+
+										'<span class="stepDesc"> '+name+
+											'<br /><small>'+desc+'</small> </span>'+
+									'</a></li>';
+				$("#wizardLinks").append(wizardLinkHTML);
+
+				//build each form for each wizard step
+				$.each( sectionObj.dynForm.jsonSchema.properties,function(field,fieldObj) { 
 
 					if(fieldObj.rules)
 						form.rules[field] = fieldObj.rules;
 					
 					buildInputField("#"+sectionId,field, fieldObj, settings.surveyValues);
+					//Only the last section carries the submit button
 					if( sectionIndex == Object.keys(settings.surveyObj).length-1){
 						fieldHTML = '<div class="form-actions">'+
-									'<button type="submit" class="btn btn-green pull-right">'+
+									'<button type="submit" class="btn btn-green pull-right finish-step">'+
 										'Submit <i class="fa fa-arrow-circle-right"></i>'+
 									'</button>'+
-									'<a  href="javascript:;" class="btn-prev btn btn-blue pull-right">'+
+									'<a  href="javascript:;" class="btn-prev btn btn-blue pull-right back-step">'+
 										'<i class="fa fa-arrow-circle-left"></i> Prev'+
 									'</a>'+
 								'</div>';
@@ -97,10 +129,10 @@ onSave: (optional) overloads the generic saveProcess
 					else 
 					{
 						fieldHTML = '<div class="form-actions">';
-						fieldHTML += '<a href="javascript:;" class="btn-next btn btn-blue pull-right">'+
+						fieldHTML += '<a href="javascript:;" class="btn-next btn btn-blue pull-right next-step">'+
 										'Next <i class="fa fa-arrow-circle-right"></i>'+
 									'</a> ';
-						fieldHTML += (sectionIndex>0) ? '<a href="javascript:;" class="btn-prev btn btn-blue pull-right">'+
+						fieldHTML += (sectionIndex>0) ? '<a href="javascript:;" class="btn-prev btn btn-blue pull-right back-step">'+
 										'<i class="fa fa-arrow-circle-left"></i> Prev'+
 									'</a>' : "";
 						fieldHTML += '</div>';
@@ -110,7 +142,7 @@ onSave: (optional) overloads the generic saveProcess
 				});
 				sectionIndex++;
 			})
-			
+			numberOfSteps = sectionIndex;
 			/* **************************************
 			* CONTEXT ELEMENTS, used for saving purposes
 			***************************************** */
@@ -353,6 +385,7 @@ onSave: (optional) overloads the generic saveProcess
 		        } 
 		        else 
 		        {
+		        	toastr.info("default SaveProcess : "+params.savePath);
 		        	console.info("default SaveProcess",params.savePath);
 		        	console.dir($(params.surveyId).serializeFormJSON());
 		        	/*$.ajax({
@@ -375,7 +408,22 @@ onSave: (optional) overloads the generic saveProcess
 				errorHandler.show();
 			}
 		});
-		
+
+		/* **************************************
+		* WIZARD INIT
+		***************************************** */
+		wizardContent = $('#wizard');
+		wizardContent.smartWizard({
+            selected: 0,
+            keyNavigation: false,
+            //onLeaveStep: leaveAStepCallback,
+            //onShowStep: onShowStep,
+        });
+        animateBar();
+
+        /* **************************************
+		* NEXT and BACK BUTTONS
+		***************************************** */
 		$('.btn-next').unbind("click").click(function()
 		{
 			if( validateForm( activeSection ) )
@@ -384,6 +432,8 @@ onSave: (optional) overloads the generic saveProcess
 				activeSection++;
 				console.log("btn-next",activeSection);
 				$( ".section"+activeSection ).removeClass("hide");
+				wizardContent.smartWizard("goForward");
+				animateBar(activeSection+1);
 			}
 		});
 
@@ -392,7 +442,9 @@ onSave: (optional) overloads the generic saveProcess
 			$(".section"+activeSection).addClass("hide");
 			activeSection--;
 			console.log("btn-prev",activeSection);
-			$(".section"+activeSection).removeClass("hide");			
+			$(".section"+activeSection).removeClass("hide");	
+			wizardContent.smartWizard("goBackward");
+			animateBar(activeSection+1);		
 		});
 
 		console.info("connecting any specific input event select2, datepicker...");
@@ -506,23 +558,30 @@ onSave: (optional) overloads the generic saveProcess
 		}
 	}
 
+    var animateBar = function (val) {
+    	console.log("animateBar");
+        if ((typeof val == 'undefined') || val == "") {
+            val = 1;
+        };
+        var valueNow = Math.floor(100 / $(".stepNumber").length * val);
+        $('.step-bar').css('width', valueNow + '%');
+    };  
+    
 	/* **************************************
-	*
 	*	complete Form secion validations
-	*
 	***************************************** */
 	function validateForm ( sectionIndex ) 
 	{ 
 		console.log( "validateForm", sectionIndex, survey );
 		var counter = 0;
 		var result = true;
-		$.each( survey , function( sectionId ,formObj ) 
+		$.each( survey , function( sectionId ,sectionObj ) 
 		{ 
 			console.log( "validateForm",sectionId, counter, sectionIndex );
 			if( counter == sectionIndex )
 			{
-				console.dir(formObj);
-				$.each(formObj.jsonSchema.properties , function(field,fieldObj) 
+				console.dir(sectionObj.dynForm);
+				$.each(sectionObj.dynForm.jsonSchema.properties , function(field,fieldObj) 
 				{ 
 					if( fieldObj.rules ){
 						var res = $("#opendata").validate().element("#"+field);

@@ -59,6 +59,9 @@
 
 			</div>
 		</div>
+		<div class="space20"></div>
+
+		
 <style type="text/css">
 	label.error{color:red; font-size:10px;}
 </style>
@@ -84,6 +87,7 @@
 		<script src="assets/plugins/jquery-validation/dist/jquery.validate.min.js"></script>
 		<script src="assets/plugins/select2/select2.min.js"></script>
 		<script src="assets/plugins/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+		<script src="assets/plugins/jQuery-Smart-Wizard/js/jquery.smartWizard.js"></script>
 		<script src="assets/plugins/jsonHelper.js"></script>
 		<script src="../jquery.dynSurvey.js"></script>
 		<!-- end: JAVASCRIPTS REQUIRED FOR THIS PAGE ONLY -->
@@ -168,15 +172,14 @@ jQuery(document).ready(function() {
 	var form = $.dynSurvey({
 		surveyId : "#opendata",
 		surveyObj : { 
-			"section1":form1,
-			"section2":form2,
-			"section3":form3
+			"section1" : { name : "Form1" , dynForm : form1, desc : "things todo" },
+			"section2" : { name : "Form2" , dynForm : form2, desc : "things to say" },
+			"section3" : { name : "Form3" , dynForm : form3, desc : "things not to say" }
 		},
 		collection : "smartcitizen",
 	    key : "SCSurvey"
 		//"savePath":"/ph/common/opendata"
 	});
-
 });
 
 </script>
