@@ -98,11 +98,11 @@
 ***************************************** */
 var form1 = {
 	    "jsonSchema" : {
-	        "title" : "Open Data Form",
+	        "title" : "Think",
 	        "type" : "object",
 	        "properties" : {
 	        	"separator1":{
-	        		"title":"Form 1"
+	        		"title":"Always think before talking"
 	        	},
 	            "temp" : {
 	                "inputType" : "text",
@@ -127,11 +127,11 @@ var form1 = {
 
 var form2 = {
 	    "jsonSchema" : {
-	        "title" : "Open Data Form",
+	        "title" : "Plan",
 	        "type" : "object",
 	        "properties" : {
 	        	"separator1":{
-	        		"title":"Form2"
+	        		"title":"never make a move wiithout a plan"
 	        	},
 	            "hum" :{
 	            	"inputType" : "text",
@@ -144,15 +144,32 @@ var form2 = {
 
 var form3 = {
 	    "jsonSchema" : {
-	        "title" : "Open Data Form",
+	        "title" : "Do",
 	        "type" : "object",
 	        "properties" : {
 	        	"separator1":{
-	        		"title":"Form3"
+	        		"title":"Always do your best"
 	        	},
 	            "toto" :{
 	            	"inputType" : "text",
 	            	"placeholder" : "TOto"
+	            }
+	        }
+	    },
+	    
+	};
+
+	var form4 = {
+	    "jsonSchema" : {
+	        "title" : "Act",
+	        "type" : "object",
+	        "properties" : {
+	        	"separator1":{
+	        		"title":"Act Like you know what you're doing"
+	        	},
+	            "titi" :{
+	            	"inputType" : "text",
+	            	"placeholder" : "TITI"
 	            }
 	        }
 	    },
@@ -172,9 +189,13 @@ jQuery(document).ready(function() {
 	var form = $.dynSurvey({
 		surveyId : "#opendata",
 		surveyObj : { 
-			"section1" : {  dynForm : form1 },
+			"section1" : {  dynForm : form1 
+							//,onNext : function () { alert("nesxt"); }
+							//,onPrev : function () { alert("prev"); }
+						},
 			"section2" : {  dynForm : form2 },
-			"section3" : {  dynForm : form3 }
+			"section3" : {  dynForm : form3 },
+			"section4" : {  dynForm : form4 }
 		},
 		collection : "smartcitizen",
 	    key : "SCSurvey"

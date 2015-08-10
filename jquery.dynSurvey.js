@@ -24,7 +24,7 @@ onSave: (optional) overloads the generic saveProcess
 	survey,
 	initValues = {},
 	activeSection = 0,
-	wizardContent,numberOfSteps,
+	wizardContent,numberOfSteps,navBtnAction,
 	supportTransition = thisStyle.transition !== undefined || thisStyle.WebkitTransition !== undefined || thisStyle.MozTransition !== undefined || thisStyle.MsTransition !== undefined || thisStyle.OTransition !== undefined
 	
 	/*$(subviewBackClass).on("click", function(e) {
@@ -51,6 +51,7 @@ onSave: (optional) overloads the generic saveProcess
 			var settings = $.extend({}, defaults, options);
 			$this = this;
 			survey = settings.surveyObj;
+			navBtnAction = false;
 
 			console.info("build Form dynamically into form tag : ",settings.surveyId);
 			console.dir(settings.surveyObj);
@@ -62,8 +63,6 @@ onSave: (optional) overloads the generic saveProcess
 				rules : {}
 			};
 			
-
-
 			/* **************************************
 			* Smart Wizard HTMl init
 			***************************************** */			
@@ -119,11 +118,11 @@ onSave: (optional) overloads the generic saveProcess
 						fieldHTML = '<div class="form-actions">'+
 									'<button type="submit" class="btn btn-green pull-right finish-step">'+
 										'Submit <i class="fa fa-arrow-circle-right"></i>'+
-									'</button>'+
-									'<a  href="javascript:;" class="btn-prev btn btn-blue pull-right back-step">'+
+									'</button> '+
+									' <a  href="javascript:;" class="btn-prev btn btn-blue pull-right back-step">'+
 										'<i class="fa fa-arrow-circle-left"></i> Prev'+
 									'</a>'+
-								'</div>';
+								'</div> ';
 						$("#"+sectionId).append(fieldHTML);
 					}
 					else 
@@ -132,10 +131,9 @@ onSave: (optional) overloads the generic saveProcess
 						fieldHTML += '<a href="javascript:;" class="btn-next btn btn-blue pull-right next-step">'+
 										'Next <i class="fa fa-arrow-circle-right"></i>'+
 									'</a> ';
-						fieldHTML += (sectionIndex>0) ? '<a href="javascript:;" class="btn-prev btn btn-blue pull-right back-step">'+
-										'<i class="fa fa-arrow-circle-left"></i> Prev'+
-									'</a>' : "";
-						fieldHTML += '</div>';
+						fieldHTML += (sectionIndex>0) ? ' <a href="javascript:;" class="btn-prev btn btn-blue pull-right back-step">'+
+										'<i class="fa fa-arrow-circle-left"></i> Prev</a> ' : "";
+						fieldHTML += '</div> ';
 						$("#"+sectionId).append(fieldHTML);
 					}
 						
@@ -359,9 +357,7 @@ onSave: (optional) overloads the generic saveProcess
 	
 
 	/* **************************************
-	*
 	*	any event to be initiated 
-	*
 	***************************************** */
 	var afterDynBuildSave = null;
 	function bindDynFormEvents (params, formRules) {  
@@ -416,8 +412,19 @@ onSave: (optional) overloads the generic saveProcess
 		wizardContent.smartWizard({
             selected: 0,
             keyNavigation: false,
-            //onLeaveStep: leaveAStepCallback,
-            //onShowStep: onShowStep,
+            //onLeaveStep: function(){ console.log("leaveAStepCallback");},
+            onShowStep: function(obj, context)
+            {
+            	console.log("test onShowStep",navBtnAction,context.toStep,context.fromStep,Math.abs( context.toStep - context.fromStep));
+            	if( !navBtnAction ){
+	            	$(".section"+activeSection).addClass("hide");
+	            	activeSection =  context.toStep -1 ;
+					console.log("top wisard direct link",activeSection);
+					$(".section"+activeSection).removeClass("hide");	
+				}
+				activeSection =  context.toStep -1 ;
+				animateBar(activeSection+1);
+            },
         });
         animateBar();
 
@@ -432,8 +439,12 @@ onSave: (optional) overloads the generic saveProcess
 				activeSection++;
 				console.log("btn-next",activeSection);
 				$( ".section"+activeSection ).removeClass("hide");
+				navBtnAction = true;
 				wizardContent.smartWizard("goForward");
+				navBtnAction = false;
 				animateBar(activeSection+1);
+				if( survey["section"+activeSection].onNext && jQuery.isFunction( survey["section"+activeSection].onNext ) )
+					survey["section"+activeSection].onNext();
 			}
 		});
 
@@ -443,8 +454,12 @@ onSave: (optional) overloads the generic saveProcess
 			activeSection--;
 			console.log("btn-prev",activeSection);
 			$(".section"+activeSection).removeClass("hide");	
+			navBtnAction = true;
 			wizardContent.smartWizard("goBackward");
-			animateBar(activeSection+1);		
+			navBtnAction = false;
+			animateBar(activeSection+1);
+			if( survey["section"+activeSection].onPrev && jQuery.isFunction( survey["section"+activeSection].onPrev ) )
+				survey["section"+activeSection].onPrev();
 		});
 
 		console.info("connecting any specific input event select2, datepicker...");
@@ -453,7 +468,6 @@ onSave: (optional) overloads the generic saveProcess
 		***************************************** */
 		if( $(".select2Input").length)
 		{
-
 			if( jQuery.isFunction(jQuery.fn.select2) )
 				$(".select2Input").select2();
 			else
